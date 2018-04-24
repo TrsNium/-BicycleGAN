@@ -32,7 +32,7 @@ def dis(x, reuse=False):
     return r
 
 #Decoder
-def dec(x, z_num, reuse=False):
+def dec(x, z_dim, reuse=False):
     with tf.variable_scope('decoder'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
@@ -42,6 +42,6 @@ def dec(x, z_num, reuse=False):
         x_ = tf.layers.conv2d(x_, 64, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv2')
         x_ = tf.layers.conv2d(x_, 128, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv3')
         flatten = tf.reshape(x, (-1, shape[1]//8))
-        z = tf.nn.sigmoid(tf.layers.dense(flatten, z_num, name='dense'))
+        z = tf.nn.sigmoid(tf.layers.dense(flatten, z_dim, name='dense'))
 
     return z
