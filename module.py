@@ -31,8 +31,8 @@ def dis(x, reuse=False):
         r = tf.layers.conv2d(x_, 1, [2,2], strides=(2,2), name='conv4', activation=tf.nn.sigmoid)
     return r
 
-#Decoder
-def dec(x, z_dim, reuse=False):
+#encoder
+def enc(x, z_dim, reuse=False):
     with tf.variable_scope('decoder'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
@@ -42,6 +42,13 @@ def dec(x, z_dim, reuse=False):
         x_ = tf.layers.conv2d(x_, 64, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv2')
         x_ = tf.layers.conv2d(x_, 128, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv3')
         flatten = tf.reshape(x, (-1, shape[1]//8))
-        z = tf.nn.sigmoid(tf.layers.dense(flatten, z_dim, name='dense'))
+        mu = tf.layers.dense(flatten, z_dim, name='m_dense')
+        logvar =  tf.layers.dense(flatten, z_dim, name='l_dense')
+    return mu, logvar
 
+def random_z(batch_size, z_dim):
+    z = tf.random_normal([None, z_dim], dtype=tf.float32)
     return z
+
+def kl(mu, logvar):
+    return tf.reduce_sum(mu**2 - tf.log(logvar + 1e-16) + 1 + logvar) * -.5
