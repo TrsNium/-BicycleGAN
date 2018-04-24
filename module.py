@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 #Generator 
-def gen(x):
+def gen(x, Z):
     with tf.variable_scope('g'):
         ec1 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(x, 32, [3,3], (1,1), padding='same', name='ec1'), name='eb1'))
         ec = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec1, 64, [4,4], (2,2), padding='same', name='ec2'), name='eb2'))
@@ -16,7 +16,7 @@ def gen(x):
         dc = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(dct, 64, [3,3], (1,1), padding='same', name='dc1'), name='db2'))
         dct = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d_transpose(c(dc, ec2), 64, [4,4], (2,2), padding='same', name='dct2'), name='db3'))
         dc = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(dct, 32, [3,3], (1,1), padding='same', name='dc2'), name='db4'))
-        r = tf.layers.conv2d(c(ec1, dc), 1, [3,3], (1,1), padding='same', name='dc3')
+        r = tf.layers.conv2d(c(ec1, dc), 3, [3,3], (1,1), padding='same', name='dc3')
     return r
         
 #Discriminator
