@@ -92,13 +92,25 @@ class BicycleGAN():
         )
         self.sess = tf.Session(config=config)    
 
-    def fit(self, lr, iteration):
+    def fit(self, lr, iterations, save_interval=1000):
         optim_g = tf.train.AdamOptimizer(lr).minimize(self.g_loss, var_list=self.g_var)
         optim_e = tf.train.AdamOptimizer(lr).minimize(self.e_loss, var_list=self.e_var)
         optim_d = tf.train.AdamOptimizer(lr).minimize(self.d_loss, var_list=self.d_var)
 
-        
+        self.sess.run(tf.global_variables_initializer())
+        for itr in  range(iterations):
+            pass
 
+    def pridict(self, x):
+        pass
+
+    def save(self, save_path):
+        saver = tf.train.Saver(tf.global_variables())
+        saver.save(self.sess, save_path)        
+
+    def restore(self, save_path)
+        saver = tf.train.Saver(tf.global_variables())
+        saver.restore(self.sess, save_path )
 
 args = {'z_dim': 128, 'im_size':128, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
 BicycleGAN(args)
