@@ -92,10 +92,9 @@ def enc(x, z_dim, reuse=False):
         if reuse:
             tf.get_variable_scope().reuse_variables()
         
-        shape = x.get_shape().as_list()
-        x_ = tf.layers.conv2d(x, 32, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv1')
-        x_ = tf.layers.conv2d(x_, 64, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv2')
-        x_ = tf.layers.conv2d(x_, 128, [3,3], (2,2), padding='same', activation=tf.nn.relu, name='conv3')
+        
+
+
         flatten = tf.reshape(x, (-1, shape[1]//8))
         mu = tf.layers.dense(flatten, z_dim, name='m_dense')
         logvar =  tf.layers.dense(flatten, z_dim, name='l_dense')
