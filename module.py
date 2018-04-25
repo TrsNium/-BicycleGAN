@@ -1,28 +1,43 @@
 import tensorflow as tf
 
 #Generator 
-def gen(x, Z, reuse=False):
+def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
     with tf.variable_scope('g'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
-
-        ec1 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(x, 32, [3,3], (1,1), padding='same', name='ec1'), name='eb1'))
-        ec = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec1, 64, [4,4], (2,2), padding='same', name='ec2'), name='eb2'))
-        ec2 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec, 64, [3,3], (1,1), padding='same', name='ec3'), name='eb3'))
-        ec = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec2, 128, [4,4], (2,2), padding='same', name='ec4'), name='eb4'))
-        ec3 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec, 128, [3,3], (1,1), padding='same', name='ec5'), name='eb5'))
-                
-        c = lambda a,b: tf.concat([a,b], -1)
-                
-        dx = c(ec3, ec)
-        dct = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d_transpose(dx, 128, [4,4], (2,2), padding='same', name='dct1'), name='db1'))
-        dc = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(dct, 64, [3,3], (1,1), padding='same', name='dc1'), name='db2'))
-        dct = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d_transpose(c(dc, ec2), 64, [4,4], (2,2), padding='same', name='dct2'), name='db3'))
-        dc = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(dct, 32, [3,3], (1,1), padding='same', name='dc2'), name='db4'))
-        r = tf.layers.conv2d(c(ec1, dc), 3, [3,3], (1,1), padding='same', name='dc3')
-    return r
         
+        depth = first_depth
+        c = lambda a,b: tf.concat([a,b], -1)
+
+        features = []
+        c = tf.identity(x)
+        for d in range(layer_num):
+            c = convs(c, depth, 2, 'e{}'.format(d))
+            
+            if d+1 != layer_num:
+                features.append(c)
+                c = tf.layers.max_pooling2d(c, [2,2], 2)
+                depth *= 2
+
+        depth = depth//2
+        for d, f in enumerate(features[::-1]):
+            upsampling = tf.layers.conv2d_transpose(c, depth, [2,2], (2,2), padding='same', activation=tf.nn.relu, name='{}_convt'.format(d))
+            c = tf.concat([f, upsampling], -1)
+            c = convs(c, depth, 2, 'dc{}'.format(d))
+            depth = depth//2
+
+        r = tf.layers.conv2d(c, 3, [3,3], padding='same')
+    return r
+
+def convs(x, filter_num, n, name_space):
+    with tf.variable_scope(name_space):
+        c = tf.identity(x)
+        for n_ in range(n):
+            c = tf.layers.conv2d(c, filter_num, [3,3], padding='same', activation=tf.nn.relu, name='{}_conv'.format(n_))
+    return c
+
 #Discriminator
+#TODO:Updating Discriminator regarding to patchGAN
 def dis(x, reuse=False):
     with tf.variable_scope('d'):
         if reuse:
