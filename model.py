@@ -11,6 +11,8 @@ class BicycleGAN():
         lambda_kl = args['lambda_kl']
         lambda_z = args['lambda_z']
         lambda_l1 = args['lambda_l1']
+        layer_num = args['layer_num']
+        first_depth = args['first_depth']
 
         self.A = tf.placeholder(tf.float32, [None, im_size, im_size, channel_num], name='A')
         self.B = tf.placeholder(tf.float32, [None, im_size, im_size, channel_num], name='B')
@@ -22,8 +24,7 @@ class BicycleGAN():
         self.B_encoded = self.B[:half_size]
         self.B_random = self.B[half_size]
         
-        z2img(random_z(batch_size, z_dim), tf.shape(self.A))
-
+    
         #################
         #Part Of cLR-GAN#
         #################
@@ -31,7 +32,7 @@ class BicycleGAN():
         # Fake Target B
         r_size = tf.shape(self.A_random)[0]
         z = random_z(r_size, z_dim)
-        self.B_ = gen(self.A, z, False)
+        self.B_ = gen(self.A, z, layer_num, first_depth, False)
         #print(self.B_.get_shape().as_list())
 
 
@@ -58,7 +59,7 @@ class BicycleGAN():
         z = eps*(std) + mu
 
         # Fake Trarget B
-        B_ = gen(self.A, z, True)
+        B_ = gen(self.A, z, layer_num, first_depth, True)
 
         # Discriminator outs
         dis_real = dis(tf.concat([self.A, self.B_], -1), True)
@@ -99,5 +100,5 @@ class BicycleGAN():
         
 
 
-args = {'z_dim': 128, 'im_size':128, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1}
+args = {'z_dim': 128, 'im_size':128, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
 BicycleGAN(args)

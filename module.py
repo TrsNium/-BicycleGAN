@@ -7,12 +7,13 @@ def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
             tf.get_variable_scope().reuse_variables()
         
         depth = first_depth
-        c = lambda a,b: tf.concat([a,b], -1)
+        concat = lambda a,b: tf.concat([a,b], -1)
 
         features = []
         c = tf.identity(x)
         for d in range(layer_num):
-            c = convs(c, depth, 2, 'e{}'.format(d))
+            z = z2img(Z, tf.shape(c))[1:2]
+            c = convs(concat(z, c), depth, 2, 'e{}'.format(d))
             
             if d+1 != layer_num:
                 features.append(c)
@@ -26,7 +27,7 @@ def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
             c = convs(c, depth, 2, 'dc{}'.format(d))
             depth = depth//2
 
-        r = tf.layers.conv2d(c, 3, [3,3], padding='same')
+        r = tf.layers.conv2d(c, 3, [3,3], padding='same', name='out_conv')
     return r
 
 def convs(x, filter_num, n, name_space):
