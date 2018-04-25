@@ -1,5 +1,5 @@
 import tensorflow as tf
-from module import gen, dis, enc, random_z, kl
+from module import gen, dis, enc, random_z, kl, z2img
 from util import *
 
 class BicycleGAN():
@@ -21,6 +21,8 @@ class BicycleGAN():
         self.A_random = self.A[half_size:]
         self.B_encoded = self.B[:half_size]
         self.B_random = self.B[half_size]
+        
+        z2img(random_z(batch_size, z_dim), tf.shape(self.A))
 
         #################
         #Part Of cLR-GAN#
@@ -29,8 +31,9 @@ class BicycleGAN():
         # Fake Target B
         r_size = tf.shape(self.A_random)[0]
         z = random_z(r_size, z_dim)
-        self.B_ = gen(self.A, z)
+        self.B_ = gen(self.A, z, False)
         #print(self.B_.get_shape().as_list())
+
 
         # Estimate laten z
         mu, logvar = enc(self.B_, z_dim, False)
@@ -49,13 +52,13 @@ class BicycleGAN():
         ##################
 
         # Estimate laten z
-        mu, logvar = dec(self.B, z_dim, True)
+        mu, logvar = enc(self.B, z_dim, True)
         std = tf.log(logvar*.5 + 1e-16)
         eps = random_z(half_size, z_dim) 
         z = eps*(std) + mu
 
-        # Fake Trarget B# and Estimate laten z
-        B_ = gen(self.A, z)
+        # Fake Trarget B
+        B_ = gen(self.A, z, True)
 
         # Discriminator outs
         dis_real = dis(tf.concat([self.A, self.B_], -1), True)
@@ -63,8 +66,8 @@ class BicycleGAN():
 
         # Losses
         l1 = tf.reduce_mean(tf.abs(self.B - B_)) * lambda_l1
-        kl = kl(mu, logvar) * lambda_kl
-        vae_g_loss = tf.reduce_mean(tf.ones_like(dis_fake) - dis_fake) + l1 + kl 
+        kl_ = kl(mu, logvar) * lambda_kl
+        vae_g_loss = tf.reduce_mean(tf.ones_like(dis_fake) - dis_fake) + l1 + kl_ 
         vae_d_loss = tf.reduce_mean(tf.ones_like(dis_real) - dis_real) + tf.reduce_mean(dis_fake)
            
         ##########
@@ -96,5 +99,5 @@ class BicycleGAN():
         
 
 
-args = {'z_dim': 128, 'im_size':128, 'channel_num':3}
+args = {'z_dim': 128, 'im_size':128, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1}
 BicycleGAN(args)

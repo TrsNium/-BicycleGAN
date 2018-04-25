@@ -1,8 +1,11 @@
 import tensorflow as tf
 
 #Generator 
-def gen(x, Z):
+def gen(x, Z, reuse=False):
     with tf.variable_scope('g'):
+        if reuse:
+            tf.get_variable_scope().reuse_variables()
+
         ec1 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(x, 32, [3,3], (1,1), padding='same', name='ec1'), name='eb1'))
         ec = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec1, 64, [4,4], (2,2), padding='same', name='ec2'), name='eb2'))
         ec2 = tf.nn.relu(tf.layers.batch_normalization(tf.layers.conv2d(ec, 64, [3,3], (1,1), padding='same', name='ec3'), name='eb3'))
@@ -47,8 +50,18 @@ def enc(x, z_dim, reuse=False):
     return mu, logvar
 
 def random_z(batch_size, z_dim):
-    z = tf.random_normal([None, z_dim], dtype=tf.float32)
+    z = tf.random_normal([batch_size, z_dim], dtype=tf.float32)
     return z
 
 def kl(mu, logvar):
-    return tf.reduce_sum(mu**2 - tf.log(logvar + 1e-16) + 1 + logvar) * -.5
+    return tf.reduce_sum(mu**2 - tf.log(logvar + 1e-16) + 1 + logvar) * -0.5
+
+def z2img(z, img_shape):
+    z_dim = tf.shape(z)[-1]
+    splited = tf.split(z, [1]*z_dim, axis=1)
+    imgs = []
+    for z_ in splited:
+        tiled = tf.tile(z_, [1, img_shape[1]*img_shape[2]])
+        img = tf.reshape(tiled, (-1, img_shape[1], img_shape[2], 1))
+        imgs.append(img)
+    return tf.concat(imgs, -1)
