@@ -1,14 +1,14 @@
 import tensorflow as tf
-from tensorflow.python.ops import import array_ops
-from tensorflow.python.ops import import check_ops
-from tensorflow.python.ops import import gen_nn_ops
-from tensorflow.python.ops import import math_ops
-from tensorflow.python.ops import import random_ops
+from tensorflow.python.framework import ops
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import check_ops
+from tensorflow.python.ops import gen_nn_ops
+from tensorflow.python.ops import math_ops
+from tensorflow.python.ops import random_ops
 
 #leaky relu
 def leaky_relu(features, alpha=0.2, name=None):
-     """Compute the Leaky ReLU activation function.
-    
+    """Compute the Leaky ReLU activation function.
     "Rectifier Nonlinearities Improve Neural Network Acoustic Models"
     AL Maas, AY Hannun, AY Ng - Proc. ICML, 2013
     http://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf
@@ -80,7 +80,7 @@ def dis(x, layer_num=4, reuse=False):
             depth *= 2
 
         h = tf.layers.conv2d(h, depth, [4,4], padding='same', name='conv{}'.format(layer_num+1))
-        h = tf.layers.batch_normalization(h, name='norm{}'.format(n+1))
+        h = tf.layers.batch_normalization(h, name='norm{}'.format(layer_num+1))
         h = leaky_relu(h)
 
         r = tf.layers.conv2d(h, 1, [4,4], padding='same', name='conv_out')
