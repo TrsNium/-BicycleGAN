@@ -1,4 +1,31 @@
 import tensorflow as tf
+from tensorflow.python.ops import import array_ops
+from tensorflow.python.ops import import check_ops
+from tensorflow.python.ops import import gen_nn_ops
+from tensorflow.python.ops import import math_ops
+from tensorflow.python.ops import import random_ops
+
+#leaky relu
+def leaky_relu(features, alpha=0.2, name=None):
+     """Compute the Leaky ReLU activation function.
+    
+    "Rectifier Nonlinearities Improve Neural Network Acoustic Models"
+    AL Maas, AY Hannun, AY Ng - Proc. ICML, 2013
+    http://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf
+    Args:
+        features: A `Tensor` representing preactivation values. Must be one of
+            the following types: `float16`, `float32`, `float64`, `int32`, `int64`.
+        alpha: Slope of the activation function at x < 0.
+        name: A name for the operation (optional).
+    Returns:
+        The activation value
+    """
+    with ops.name_scope(name, "LeakyRelu", [features, alpha]):
+        features = ops.convert_to_tensor(features, name="features")
+        if features.dtype.is_integer:
+            features = math_ops.to_float(features)
+            alpha = ops.convert_to_tensor(alpha, dtype=features.dtype, name="alpha")
+        return math_ops.maximum(alpha * features, features)
 
 #Generator 
 def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
@@ -38,17 +65,26 @@ def convs(x, filter_num, n, name_space):
     return c
 
 #Discriminator
-#TODO:Updating Discriminator regarding to patchGAN
-def dis(x, reuse=False):
+def dis(x, layer_num=4, reuse=False):
     with tf.variable_scope('d'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
-                    
-        x_ = tf.layers.conv2d(x, 32, [3,3], strides=(2,2), activation=tf.nn.relu, name='conv1')
-        x_ = tf.layers.batch_normalization(tf.layers.conv2d(x_, 64, [3,3], strides=(2,2), activation=tf.nn.relu, name='conv2'), name='b1')
-        x_ = tf.layers.batch_normalization(tf.layers.conv2d(x_, 128, [3,3], strides=(2,2), activation=tf.nn.relu, name='conv3'), name='b2')
-        r = tf.layers.conv2d(x_, 1, [2,2], strides=(2,2), name='conv4', activation=tf.nn.sigmoid)
-    return r
+        
+        depth = 64
+        h = leaky_relu(tf.layers.conv2d(x, depth, [4,4], (2,2), padding='same', name='conv0'))
+        
+        for n in range(layer_num):
+            h = tf.layers.conv2d(h, depth, [4,4], (2,2), padding='same', name='conv{}'.format(n+1))
+            h = tf.layers.batch_normalization(h, name='norm{}'.format(n+1))
+            h = leaky_relu(h)
+            depth *= 2
+
+        h = tf.layers.conv2d(h, depth, [4,4], padding='same', name='conv{}'.format(layer_num+1))
+        h = tf.layers.batch_normalization(h, name='norm{}'.format(n+1))
+        h = leaky_relu(h)
+
+        r = tf.layers.conv2d(h, 1, [4,4], padding='same', name='conv_out')
+    return tf.nn.sigmoid(r)
 
 #encoder
 def enc(x, z_dim, reuse=False):

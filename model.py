@@ -40,8 +40,8 @@ class BicycleGAN():
         mu, logvar = enc(self.B_, z_dim, False)
 
         # Discriminator outs
-        dis_real = dis(tf.concat([self.A, self.B], -1), False)
-        dis_fake = dis(tf.concat([self.A, self.B_], -1), True)
+        dis_real = dis(tf.concat([self.A, self.B], -1), reuse=False)
+        dis_fake = dis(tf.concat([self.A, self.B_], -1), reuse=True)
 
         # Losses
         laten = tf.reduce_mean(tf.abs(mu - z)) * lambda_z
@@ -62,8 +62,8 @@ class BicycleGAN():
         B_ = gen(self.A, z, layer_num, first_depth, True)
 
         # Discriminator outs
-        dis_real = dis(tf.concat([self.A, self.B_], -1), True)
-        dis_fake = dis(tf.concat([self.A, B_], -1), True)
+        dis_real = dis(tf.concat([self.A, self.B_], -1), reuse=True)
+        dis_fake = dis(tf.concat([self.A, B_], -1), reuse=True)
 
         # Losses
         l1 = tf.reduce_mean(tf.abs(self.B - B_)) * lambda_l1
