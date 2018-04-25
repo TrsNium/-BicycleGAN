@@ -37,7 +37,7 @@ class BicycleGAN():
 
 
         # Estimate laten z
-        mu, logvar = enc(self.B_, z_dim, False)
+        mu, logvar = enc(self.B_, z_dim, reuse=False)
 
         # Discriminator outs
         dis_real = dis(tf.concat([self.A, self.B], -1), reuse=False)
@@ -53,7 +53,7 @@ class BicycleGAN():
         ##################
 
         # Estimate laten z
-        mu, logvar = enc(self.B, z_dim, True)
+        mu, logvar = enc(self.B, z_dim, reuse=True)
         std = tf.log(logvar*.5 + 1e-16)
         eps = random_z(half_size, z_dim) 
         z = eps*(std) + mu

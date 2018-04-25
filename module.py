@@ -39,7 +39,7 @@ def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
         features = []
         c = tf.identity(x)
         for d in range(layer_num):
-            z = z2img(Z, tf.shape(c))[1:2]
+            z = z2img(Z, tf.shape(c))
             c = convs(concat(z, c), depth, 2, 'e{}'.format(d))
             
             if d+1 != layer_num:
@@ -65,7 +65,7 @@ def convs(x, filter_num, n, name_space):
     return c
 
 #Discriminator
-def dis(x, layer_num=4, reuse=False):
+def dis(x, layer_num=4, first_depth=64, reuse=False):
     with tf.variable_scope('d'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
@@ -87,15 +87,22 @@ def dis(x, layer_num=4, reuse=False):
     return tf.nn.sigmoid(r)
 
 #encoder
-def enc(x, z_dim, reuse=False):
+def enc(x, z_dim, layer_num=3, first_depth=64, reuse=False):
     with tf.variable_scope('decoder'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
-        
-        
 
+        depth = first_depth
+        h = tf.layers.conv2d(x, depth, [4,4], (2,2), padding='same', name='conv0')
+        h = leaky_relu(h)
 
-        flatten = tf.reshape(x, (-1, shape[1]//8))
+        for n in range(layer_num):
+            h = tf.layers.conv2d(h, depth, [4,4], (2,2), padding='same', name='conv{}'.format(n+1))
+            h = tf.layers.batch_normalization(h, name='norm{}'.format(n+1))
+            h = leaky_relu(h)
+
+        h = tf.layers.average_pooling2d(h, [8,8], (1,1), padding='same')
+        flatten = tf.contrib.layers.flatten(h)
         mu = tf.layers.dense(flatten, z_dim, name='m_dense')
         logvar =  tf.layers.dense(flatten, z_dim, name='l_dense')
     return mu, logvar
