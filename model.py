@@ -93,7 +93,7 @@ class BicycleGAN():
         )
         self.sess = tf.Session(config=config)    
 
-    def fit(self, epochs, generator, lr, iterations, log_interval=1000):
+    def fit(self, epochs, generator, lr, log_interval=1000):
         optim_g = tf.train.AdamOptimizer(lr).minimize(self.g_loss, var_list=self.g_var)
         optim_e = tf.train.AdamOptimizer(lr).minimize(self.e_loss, var_list=self.e_var)
         optim_d = tf.train.AdamOptimizer(lr).minimize(self.d_loss, var_list=self.d_var)
@@ -127,5 +127,11 @@ class BicycleGAN():
         saver = tf.train.Saver(tf.global_variables())
         saver.restore(self.sess, save_path)
 
-args = {'z_dim': 128, 'im_size':128, 'achannel_num':1, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
-BicycleGAN(args)
+
+if __name__ == '__main__':
+    x, y = load_data('./data/edges2shoes/')
+    gen = generator(32, x, y)
+    
+    args = {'z_dim': 16, 'im_size':256, 'achannel_num':1, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
+    model_ = BicycleGAN(args)
+    model_.fit(200, gen, .0002, )

@@ -26,22 +26,24 @@ def load_data(data_dir):
 def generator(batch_size, x, y):
     if not x.shape[0] != y.shape[0]:
         return 
-    
-    epoch = 0
-    selected = []
-    falg = False
-    while True:
-        k = batch_size
-        if batch_size < x.shape[0] - len(selected):
-            k = x.shape[0] - len(selected)
-            flag = True
-        selected_idx = random.sample(list(set(range(x.shape[0])) - set(selected)),k=k)
-        x_ = x[selected_idx]
-        y_ = y[selected_idx]
 
-        if flag:
-            flag = False
-            selected = []
-            epoch += 1
+    def gen():
+        epoch = 0
+        selected = []
+        falg = False
+        while True:
+            k = batch_size
+            if batch_size < x.shape[0] - len(selected):
+                k = x.shape[0] - len(selected)
+                flag = True
+            selected_idx = random.sample(list(set(range(x.shape[0])) - set(selected)),k=k)
+            x_ = x[selected_idx]
+            y_ = y[selected_idx]
 
-        yield epoch, x_, y_
+            if flag:
+                flag = False
+                selected = []
+                epoch += 1
+
+            yield epoch, x_, y_
+    return gen
