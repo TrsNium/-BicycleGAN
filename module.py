@@ -28,7 +28,7 @@ def leaky_relu(features, alpha=0.2, name=None):
         return math_ops.maximum(alpha * features, features)
 
 #Generator 
-def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
+def gen(x, Z, layer_num=4, first_depth=64, out_channel_num=3, reuse=False):
     with tf.variable_scope('g'):
         if reuse:
             tf.get_variable_scope().reuse_variables()
@@ -54,7 +54,7 @@ def gen(x, Z, layer_num=4, first_depth=64,reuse=False):
             c = convs(c, depth, 2, 'dc{}'.format(d))
             depth = depth//2
 
-        r = tf.layers.conv2d(c, 3, [3,3], padding='same', name='out_conv')
+        r = tf.layers.conv2d(c, out_channel_num, [3,3], padding='same', name='out_conv')
     return r
 
 def convs(x, filter_num, n, name_space):

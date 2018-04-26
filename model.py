@@ -14,7 +14,7 @@ class BicycleGAN():
         layer_num = args['layer_num']
         first_depth = args['first_depth']
 
-        self.A = tf.placeholder(tf.float32, [None, im_size, im_size, channel_num], name='A')
+        self.A = tf.placeholder(tf.float32, [None, im_size, im_size, None], name='A')
         self.B = tf.placeholder(tf.float32, [None, im_size, im_size, channel_num], name='B')
         batch_size = tf.shape(self.A)[0] 
         
@@ -32,7 +32,7 @@ class BicycleGAN():
         # Fake Target B
         r_size = tf.shape(self.A_random)[0]
         z = random_z(r_size, z_dim)
-        self.B_ = gen(self.A, z, layer_num, first_depth, False)
+        self.B_ = gen(self.A, z, layer_num, first_depth, channel_num, False)
         #print(self.B_.get_shape().as_list())
 
 
@@ -59,7 +59,7 @@ class BicycleGAN():
         z = eps*(std) + mu
 
         # Fake Trarget B
-        B_ = gen(self.A, z, layer_num, first_depth, True)
+        B_ = gen(self.A, z, layer_num, first_depth, channel_num, True)
 
         # Discriminator outs
         dis_real = dis(tf.concat([self.A, self.B_], -1), reuse=True)
@@ -92,14 +92,25 @@ class BicycleGAN():
         )
         self.sess = tf.Session(config=config)    
 
-    def fit(self, lr, iterations, save_interval=1000):
+    def fit(self, epochs, generator, lr, iterations, save_interval=1000):
         optim_g = tf.train.AdamOptimizer(lr).minimize(self.g_loss, var_list=self.g_var)
         optim_e = tf.train.AdamOptimizer(lr).minimize(self.e_loss, var_list=self.e_var)
         optim_d = tf.train.AdamOptimizer(lr).minimize(self.d_loss, var_list=self.d_var)
 
         self.sess.run(tf.global_variables_initializer())
-        for itr in  range(iterations):
-            pass
+        for epoch, x, y in  generator():
+            fedd_dict = {
+                self.A: x,
+                self.B: y
+            }
+            
+            g_loss,_ = self.sess.run([self.g_loss, optim_g], feed_dict=feed_dict)
+            d_loss,_ = self.sess.run([self.d_loss, optim_d], feed_dict=feed_dict)
+            _ = self.sess.run(optim_e, feed_dict=feed_dict)
+
+            if epoch == epochs:
+                print('*******finished training!*******') 
+                return
 
     def pridict(self, x):
         pass
