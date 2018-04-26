@@ -20,7 +20,7 @@ def load_data(data_dir):
         a_img = np.append(a_img, np.array([aimg]), axis=0)
         b_img = np.append(b_img, np.array([bimg]), axis=0)
                                     
-    b_img = np.expand_dims(b_img, axis=-1)datadir = 'data/edges2shoes/val'
+    b_img = np.expand_dims(b_img, axis=-1)
     return a_img, b_img
 
 def generator(batch_size, x, y):

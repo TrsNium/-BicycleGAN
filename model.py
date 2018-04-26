@@ -7,6 +7,7 @@ class BicycleGAN():
     def __init__(self, args):
         z_dim = args['z_dim']
         im_size = args['im_size']
+        achannel_num = args['channel_num']
         channel_num = args['channel_num']
         lambda_kl = args['lambda_kl']
         lambda_z = args['lambda_z']
@@ -14,7 +15,7 @@ class BicycleGAN():
         layer_num = args['layer_num']
         first_depth = args['first_depth']
 
-        self.A = tf.placeholder(tf.float32, [None, im_size, im_size, None], name='A')
+        self.A = tf.placeholder(tf.float32, [None, im_size, im_size, achannel_num], name='A')
         self.B = tf.placeholder(tf.float32, [None, im_size, im_size, channel_num], name='B')
         batch_size = tf.shape(self.A)[0] 
         
@@ -92,13 +93,13 @@ class BicycleGAN():
         )
         self.sess = tf.Session(config=config)    
 
-    def fit(self, epochs, generator, lr, iterations, save_interval=1000):
+    def fit(self, epochs, generator, lr, iterations, log_interval=1000):
         optim_g = tf.train.AdamOptimizer(lr).minimize(self.g_loss, var_list=self.g_var)
         optim_e = tf.train.AdamOptimizer(lr).minimize(self.e_loss, var_list=self.e_var)
         optim_d = tf.train.AdamOptimizer(lr).minimize(self.d_loss, var_list=self.d_var)
 
         self.sess.run(tf.global_variables_initializer())
-        for epoch, x, y in  generator():
+        for i, (epoch, x, y) in enumerate(generator()):
             fedd_dict = {
                 self.A: x,
                 self.B: y
@@ -107,6 +108,9 @@ class BicycleGAN():
             g_loss,_ = self.sess.run([self.g_loss, optim_g], feed_dict=feed_dict)
             d_loss,_ = self.sess.run([self.d_loss, optim_d], feed_dict=feed_dict)
             _ = self.sess.run(optim_e, feed_dict=feed_dict)
+            
+            if i % log_interval ==0:
+                print('epoch:', epoch, '\titeration:' , i, '\tg_loss:', g_loss, '\td_loss', d_loss)
 
             if epoch == epochs:
                 print('*******finished training!*******') 
@@ -119,9 +123,9 @@ class BicycleGAN():
         saver = tf.train.Saver(tf.global_variables())
         saver.save(self.sess, save_path)        
 
-    def restore(self, save_path)
+    def restore(self, save_path):
         saver = tf.train.Saver(tf.global_variables())
-        saver.restore(self.sess, save_path )
+        saver.restore(self.sess, save_path)
 
-args = {'z_dim': 128, 'im_size':128, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
+args = {'z_dim': 128, 'im_size':128, 'achannel_num':1, 'channel_num':3, 'lambda_kl':1, 'lambda_z':1, 'lambda_l1':1, 'layer_num':4, 'first_depth':64}
 BicycleGAN(args)
