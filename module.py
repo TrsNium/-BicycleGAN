@@ -115,11 +115,13 @@ def kl(mu, logvar):
     return tf.reduce_sum(mu**2 - tf.log(logvar + 1e-16) + 1 + logvar) * -0.5
 
 def z2img(z, img_shape):
-    z_dim = tf.shape(z)[-1]
-    splited = tf.split(z, [1]*z_dim, axis=1)
+    z_dim = z.get_shape().as_list()[-1]
+    bsize = tf.shape(z)[0]
+    splited = tf.split(z, z_dim, axis=1)
     imgs = []
     for z_ in splited:
-        tiled = tf.tile(z_, [1, img_shape[1]*img_shape[2]])
-        img = tf.reshape(tiled, (-1, img_shape[1], img_shape[2], 1))
+        #[Batch size, 1]
+        tiled = tf.tile(z_, [1 , img_shape[1]*img_shape[2]])
+        img = tf.reshape(tiled, (bsize, img_shape[1], img_shape[2], 1))
         imgs.append(img)
     return tf.concat(imgs, -1)

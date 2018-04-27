@@ -23,7 +23,7 @@ class BicycleGAN():
         self.A_encoded = self.A[:half_size]
         self.A_random = self.A[half_size:]
         self.B_encoded = self.B[:half_size]
-        self.B_random = self.B[half_size]
+        self.B_random = self.B[half_size:]
         
     
         #################
