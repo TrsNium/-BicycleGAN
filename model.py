@@ -33,7 +33,7 @@ class BicycleGAN():
         # Fake Target B
         r_size = tf.shape(self.A_random)[0]
         z = random_z(r_size, z_dim)
-        self.B_ = gen(self.A, z, layer_num, first_depth, channel_num, False)
+        self.B_ = gen(self.A_random, z, layer_num, first_depth, channel_num, False)
         #print(self.B_.get_shape().as_list())
 
 
@@ -41,8 +41,8 @@ class BicycleGAN():
         mu, logvar = enc(self.B_, z_dim, reuse=False)
 
         # Discriminator outs
-        dis_real = dis(tf.concat([self.A, self.B], -1), reuse=False)
-        dis_fake = dis(tf.concat([self.A, self.B_], -1), reuse=True)
+        dis_real = dis(tf.concat([self.A_random, self.B_random], -1), reuse=False)
+        dis_fake = dis(tf.concat([self.A_random, self.B_], -1), reuse=True)
 
         # Losses
         laten = tf.reduce_mean(tf.abs(mu - z)) * lambda_z
@@ -54,20 +54,20 @@ class BicycleGAN():
         ##################
 
         # Estimate laten z
-        mu, logvar = enc(self.B, z_dim, reuse=True)
+        mu, logvar = enc(self.B_encoded, z_dim, reuse=True)
         std = tf.log(logvar*.5 + 1e-16)
         eps = random_z(half_size, z_dim) 
         z = eps*(std) + mu
 
         # Fake Trarget B
-        B_ = gen(self.A, z, layer_num, first_depth, channel_num, True)
+        B_ = gen(self.A_encoded, z, layer_num, first_depth, channel_num, True)
 
         # Discriminator outs
-        dis_real = dis(tf.concat([self.A, self.B_], -1), reuse=True)
-        dis_fake = dis(tf.concat([self.A, B_], -1), reuse=True)
+        dis_real = dis(tf.concat([self.A_encoded, self.B_encoded], -1), reuse=True)
+        dis_fake = dis(tf.concat([self.A_encoded, B_], -1), reuse=True)
 
         # Losses
-        l1 = tf.reduce_mean(tf.abs(self.B - B_)) * lambda_l1
+        l1 = tf.reduce_mean(tf.abs(self.B_encoded - B_)) * lambda_l1
         kl_ = kl(mu, logvar) * lambda_kl
         vae_g_loss = tf.reduce_mean(tf.ones_like(dis_fake) - dis_fake) + l1 + kl_ 
         vae_d_loss = tf.reduce_mean(tf.ones_like(dis_real) - dis_real) + tf.reduce_mean(dis_fake)
