@@ -6,20 +6,32 @@ import os
 import subprocess
 import random 
 
-def load_data(data_dir):
+def load_data(data_dir, size=5000):
     if not os.path.exists(data_dir):
         subprocess.call('source download_dataset.sh')
 
     a_img = np.empty((0,256,256), dtype=np.float32)
     b_img = np.empty((0,256,256,3), dtype=np.float32)
-    for name in os.listdir(data_dir):
-        img = np.asarray(Image.open(os.path.join(datadir, name)))
+    names = os.listdir(data_dir)[:size]
+    
+    # variables for animation
+    filesize = len(names)
+    interval = int(filesize * .1)
+    p = 0
+    size= 10
+    print('load images')
+    for i, name in enumerate(names):
+        print('\r now process {} th image\t'.format(i)+'|'+'□'*p+'　'*(size-(p+1)) +'|', end=' ')
+        img = np.asarray(Image.open(os.path.join(data_dir, name)))
         w = img.shape[1]//2
         aimg = cv2.cvtColor(img[:, :w,:], cv2.COLOR_RGB2GRAY)/255
         bimg = img[:, w:, :]/255
         a_img = np.append(a_img, np.array([aimg]), axis=0)
         b_img = np.append(b_img, np.array([bimg]), axis=0)
-                                    
+        
+        if (i+1) % interval == 0:
+            p+=1
+
     b_img = np.expand_dims(b_img, axis=-1)
     return a_img, b_img
 
